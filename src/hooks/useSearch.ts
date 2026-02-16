@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import type { MediaType, NormalizedMedia } from '@/types/media';
-import type { PaginatedResult } from '@/lib/api/types';
 import { searchAll, searchByType } from '@/lib/api/mediaApi';
 
 export function useSearch() {

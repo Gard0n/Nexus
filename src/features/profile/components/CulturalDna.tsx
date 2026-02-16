@@ -26,11 +26,6 @@ export function CulturalDna({ stats }: CulturalDnaProps) {
       color: MEDIA_CONFIG[type as keyof typeof MEDIA_CONFIG].color,
     }));
 
-  const genreData = stats.topGenres.map((g) => ({
-    genre: g.genre.length > 15 ? g.genre.slice(0, 15) + '...' : g.genre,
-    count: g.count,
-  }));
-
   // Radar data (top 6 genres for better visualization)
   const radarData = stats.topGenres.slice(0, 6).map((g) => ({
     genre: g.genre.length > 12 ? g.genre.slice(0, 12) + '...' : g.genre,

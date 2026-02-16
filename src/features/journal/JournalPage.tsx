@@ -54,7 +54,7 @@ export function JournalPage() {
               {month}
             </h3>
             <div className="space-y-4">
-              {monthEntries.map((entry, index) => (
+              {monthEntries.map((entry) => (
                 <div key={entry.id} className="stagger-item">
                   <JournalEntryCard
                     entry={entry}

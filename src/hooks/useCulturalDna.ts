@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import type { JournalEntry, MediaType } from '@/types/media';
-import { MEDIA_CONFIG } from '@/types/media';
 
 export interface CulturalDnaStats {
   totalEntries: number;
