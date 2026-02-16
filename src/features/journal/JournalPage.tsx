@@ -54,12 +54,13 @@ export function JournalPage() {
               {month}
             </h3>
             <div className="space-y-4">
-              {monthEntries.map((entry) => (
-                <JournalEntryCard
-                  key={entry.id}
-                  entry={entry}
-                  onDelete={deleteEntry}
-                />
+              {monthEntries.map((entry, index) => (
+                <div key={entry.id} className="stagger-item">
+                  <JournalEntryCard
+                    entry={entry}
+                    onDelete={deleteEntry}
+                  />
+                </div>
               ))}
             </div>
           </div>

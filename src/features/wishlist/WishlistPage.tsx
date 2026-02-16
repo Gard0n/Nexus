@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Heart, Loader2 } from 'lucide-react';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useJournal } from '@/hooks/useJournal';
+import { useToast } from '@/contexts/ToastContext';
 import type { MediaType, WishlistItem } from '@/types/media';
 import { MEDIA_CONFIG } from '@/types/media';
 import { WishlistItemCard } from './components/WishlistItem';
@@ -12,6 +13,7 @@ const MEDIA_TYPES: MediaType[] = ['movie', 'tv', 'book', 'game', 'music'];
 export function WishlistPage() {
   const { items, loading, removeItem, removeByMedia } = useWishlist();
   const { addEntry } = useJournal();
+  const { showToast } = useToast();
   const [selectedItem, setSelectedItem] = useState<WishlistItem | null>(null);
   const [filterType, setFilterType] = useState<MediaType | 'all'>('all');
 
@@ -93,7 +95,10 @@ export function WishlistPage() {
             <WishlistItemCard
               key={item.id}
               item={item}
-              onRemove={removeItem}
+              onRemove={(id) => {
+                removeItem(id);
+                showToast('Retiré de la wishlist');
+              }}
               onMarkAsConsumed={(item) => setSelectedItem(item)}
             />
           ))}
@@ -112,6 +117,7 @@ export function WishlistPage() {
           onSubmit={(data) => {
             addEntry(selectedItem.media, data);
             removeByMedia(selectedItem.media.externalId, selectedItem.media.type);
+            showToast(`"${selectedItem.media.title}" ajouté au journal`);
             setSelectedItem(null);
           }}
         />
