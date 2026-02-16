@@ -8,6 +8,7 @@ import type { MediaType, NormalizedMedia } from '@/types/media';
 import { MEDIA_CONFIG } from '@/types/media';
 import { MediaCard } from './components/MediaCard';
 import { LogMediaModal } from '@/features/journal/components/LogMediaModal';
+import { SearchSkeleton } from '@/components/SearchSkeleton';
 
 const MEDIA_TYPES: MediaType[] = ['movie', 'tv', 'book', 'game', 'music'];
 
@@ -110,7 +111,9 @@ export function SearchPage() {
           </div>
 
           {/* Results grid */}
-          {activeResults.length > 0 ? (
+          {loading ? (
+            <SearchSkeleton />
+          ) : activeResults.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {activeResults.map((media) => (
                 <MediaCard
