@@ -25,6 +25,7 @@ export function useCulturalDna(entries: JournalEntry[]): CulturalDnaStats {
         mostActiveMonth: '',
         favoriteType: null,
         ratingDistribution: {},
+        topEntries: [],
       };
     }
 
