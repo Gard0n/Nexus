@@ -6,6 +6,13 @@ import { MediaIcon } from '@/components/MediaIcon';
 
 interface LogMediaModalProps {
   media: NormalizedMedia;
+  initialData?: {
+    consumedAt: string;
+    rating: number | null;
+    note: string;
+    tags: string[];
+    isRewatch: boolean;
+  };
   onClose: () => void;
   onSubmit: (data: {
     consumedAt: string;
@@ -16,15 +23,15 @@ interface LogMediaModalProps {
   }) => void;
 }
 
-export function LogMediaModal({ media, onClose, onSubmit }: LogMediaModalProps) {
+export function LogMediaModal({ media, initialData, onClose, onSubmit }: LogMediaModalProps) {
   const config = MEDIA_CONFIG[media.type];
   const today = new Date().toISOString().split('T')[0];
 
-  const [consumedAt, setConsumedAt] = useState(today);
-  const [rating, setRating] = useState<number | null>(null);
-  const [note, setNote] = useState('');
-  const [tagsInput, setTagsInput] = useState('');
-  const [isRewatch, setIsRewatch] = useState(false);
+  const [consumedAt, setConsumedAt] = useState(initialData?.consumedAt || today);
+  const [rating, setRating] = useState<number | null>(initialData?.rating ?? null);
+  const [note, setNote] = useState(initialData?.note || '');
+  const [tagsInput, setTagsInput] = useState(initialData?.tags.join(', ') || '');
+  const [isRewatch, setIsRewatch] = useState(initialData?.isRewatch || false);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -175,7 +182,7 @@ export function LogMediaModal({ media, onClose, onSubmit }: LogMediaModalProps) 
               className="flex-1 py-2.5 bg-nexus-accent hover:bg-nexus-accent-hover text-white rounded-lg text-sm font-medium transition-colors"
               style={{ backgroundColor: config.color }}
             >
-              Ajouter au journal
+              {initialData ? 'Modifier' : 'Ajouter au journal'}
             </button>
           </div>
         </form>

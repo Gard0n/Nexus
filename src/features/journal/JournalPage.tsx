@@ -1,9 +1,15 @@
+import { useState } from 'react';
 import { BookOpen, Loader2 } from 'lucide-react';
 import { useJournal } from '@/hooks/useJournal';
+import { useToast } from '@/contexts/ToastContext';
 import { JournalEntryCard } from './components/JournalEntry';
+import { LogMediaModal } from './components/LogMediaModal';
+import type { JournalEntry } from '@/types/media';
 
 export function JournalPage() {
-  const { entries, loading, deleteEntry } = useJournal();
+  const { entries, loading, updateEntry, deleteEntry } = useJournal();
+  const { showToast } = useToast();
+  const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
 
   if (loading) {
     return (
@@ -58,6 +64,7 @@ export function JournalPage() {
                 <div key={entry.id} className="stagger-item">
                   <JournalEntryCard
                     entry={entry}
+                    onEdit={() => setEditingEntry(entry)}
                     onDelete={deleteEntry}
                   />
                 </div>
@@ -66,6 +73,26 @@ export function JournalPage() {
           </div>
         ))}
       </div>
+
+      {/* Edit Modal */}
+      {editingEntry && (
+        <LogMediaModal
+          media={editingEntry.media}
+          initialData={{
+            consumedAt: editingEntry.consumedAt,
+            rating: editingEntry.rating,
+            note: editingEntry.note,
+            tags: editingEntry.tags,
+            isRewatch: editingEntry.isRewatch,
+          }}
+          onClose={() => setEditingEntry(null)}
+          onSubmit={(data) => {
+            updateEntry(editingEntry.id, data);
+            setEditingEntry(null);
+            showToast('Entrée modifiée');
+          }}
+        />
+      )}
     </div>
   );
 }
