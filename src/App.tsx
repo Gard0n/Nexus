@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { Layout } from '@/components/Layout';
@@ -33,7 +33,7 @@ function App() {
 
   return (
     <ToastProvider>
-      <BrowserRouter>
+      <HashRouter>
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<JournalPage />} />
@@ -42,7 +42,7 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
           </Route>
         </Routes>
-      </BrowserRouter>
+      </HashRouter>
     </ToastProvider>
   );
 }
