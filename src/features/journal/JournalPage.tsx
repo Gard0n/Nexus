@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { BookOpen, Loader2, Filter, ArrowUpDown } from 'lucide-react';
 import { useJournal } from '@/hooks/useJournal';
 import { useToast } from '@/contexts/ToastContext';

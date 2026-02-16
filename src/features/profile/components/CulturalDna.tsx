@@ -1,7 +1,8 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, RadarChart, PolarGrid, PolarAngleAxis, Radar } from 'recharts';
-import { Star, TrendingUp, Calendar } from 'lucide-react';
+import { Star, TrendingUp, Calendar, Trophy } from 'lucide-react';
 import type { CulturalDnaStats } from '@/hooks/useCulturalDna';
 import { MEDIA_CONFIG } from '@/types/media';
+import { MediaIcon } from '@/components/MediaIcon';
 
 interface CulturalDnaProps {
   stats: CulturalDnaStats;
@@ -168,6 +169,54 @@ export function CulturalDna({ stats }: CulturalDnaProps) {
           </ResponsiveContainer>
         </div>
       </div>
+
+      {/* Top 10 Favorite Works */}
+      {stats.topEntries.length > 0 && (
+        <div className="bg-nexus-surface border border-nexus-border rounded-lg p-4">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Trophy size={20} className="text-nexus-accent" />
+            Top 10 œuvres préférées
+          </h3>
+          <div className="space-y-2">
+            {stats.topEntries.map((entry, index) => {
+              const config = MEDIA_CONFIG[entry.media.type];
+              return (
+                <div
+                  key={entry.id}
+                  className="flex items-center gap-3 p-3 bg-nexus-bg rounded-lg hover:bg-nexus-surface-hover transition-colors"
+                >
+                  <div className="flex-shrink-0 w-8 text-center font-bold text-nexus-text-muted">
+                    #{index + 1}
+                  </div>
+                  {entry.media.posterUrl ? (
+                    <img
+                      src={entry.media.posterUrl}
+                      alt={entry.media.title}
+                      className="w-10 h-14 object-cover rounded"
+                    />
+                  ) : (
+                    <div className="w-10 h-14 bg-nexus-surface rounded flex items-center justify-center">
+                      <MediaIcon type={entry.media.type} size={16} />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-nexus-text truncate">
+                      {entry.media.title}
+                    </div>
+                    <div className="text-sm text-nexus-text-muted">
+                      {entry.media.year} • {config.label}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 text-nexus-accent font-semibold">
+                    <Star size={16} fill="currentColor" />
+                    {entry.rating}/10
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

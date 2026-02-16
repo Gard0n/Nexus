@@ -10,6 +10,7 @@ export interface CulturalDnaStats {
   mostActiveMonth: string;
   favoriteType: MediaType | null;
   ratingDistribution: Record<number, number>;
+  topEntries: JournalEntry[];
 }
 
 export function useCulturalDna(entries: JournalEntry[]): CulturalDnaStats {
@@ -82,6 +83,12 @@ export function useCulturalDna(entries: JournalEntry[]): CulturalDnaStats {
       ([, a], [, b]) => b - a
     )[0]?.[0] || '';
 
+    // Top entries (by rating)
+    const topEntries = entries
+      .filter((e) => e.rating !== null)
+      .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+      .slice(0, 10);
+
     return {
       totalEntries: entries.length,
       averageRating: Math.round(averageRating * 10) / 10,
@@ -97,6 +104,7 @@ export function useCulturalDna(entries: JournalEntry[]): CulturalDnaStats {
       mostActiveMonth,
       favoriteType,
       ratingDistribution,
+      topEntries,
     };
   }, [entries]);
 }
