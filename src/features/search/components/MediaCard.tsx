@@ -7,19 +7,23 @@ interface MediaCardProps {
   media: NormalizedMedia;
   onAddToJournal?: (media: NormalizedMedia) => void;
   onAddToWishlist?: (media: NormalizedMedia) => void;
+  onViewDetails?: (media: NormalizedMedia) => void;
 }
 
-export function MediaCard({ media, onAddToJournal, onAddToWishlist }: MediaCardProps) {
+export function MediaCard({ media, onAddToJournal, onAddToWishlist, onViewDetails }: MediaCardProps) {
   const config = MEDIA_CONFIG[media.type];
 
   return (
     <div className="bg-nexus-surface border border-nexus-border rounded-lg overflow-hidden hover:border-nexus-accent/50 transition-colors group">
-      <div className="relative aspect-[2/3] bg-nexus-bg overflow-hidden">
+      <div
+        className="relative aspect-[2/3] bg-nexus-bg overflow-hidden cursor-pointer"
+        onClick={() => onViewDetails?.(media)}
+      >
         {media.posterUrl ? (
           <img
             src={media.posterUrl}
             alt={media.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             onError={(e) => {
               e.currentTarget.style.display = 'none';
             }}
@@ -27,6 +31,13 @@ export function MediaCard({ media, onAddToJournal, onAddToWishlist }: MediaCardP
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <MediaIcon type={media.type} size={48} className="opacity-30" />
+          </div>
+        )}
+        {onViewDetails && (
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+            <span className="opacity-0 group-hover:opacity-100 text-white text-xs font-medium bg-black/60 px-3 py-1 rounded-full transition-opacity">
+              Détails
+            </span>
           </div>
         )}
         <div className="absolute top-2 left-2">

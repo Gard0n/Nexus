@@ -9,6 +9,7 @@ import { MEDIA_CONFIG } from '@/types/media';
 import { MediaCard } from './components/MediaCard';
 import { LogMediaModal } from '@/features/journal/components/LogMediaModal';
 import { SearchSkeleton } from '@/components/SearchSkeleton';
+import { MediaDetailModal } from '@/components/MediaDetailModal';
 
 const MEDIA_TYPES: MediaType[] = ['movie', 'tv', 'book', 'game', 'music'];
 
@@ -17,6 +18,7 @@ export function SearchPage() {
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [activeTab, setActiveTab] = useState<MediaType>('movie');
   const [selectedMedia, setSelectedMedia] = useState<NormalizedMedia | null>(null);
+  const [detailMedia, setDetailMedia] = useState<NormalizedMedia | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [filterGenre, setFilterGenre] = useState('');
   const [filterYear, setFilterYear] = useState('');
@@ -213,6 +215,7 @@ export function SearchPage() {
                   <MediaCard
                     key={`${media.type}-${media.externalId}`}
                     media={media}
+                    onViewDetails={(m) => setDetailMedia(m)}
                     onAddToJournal={(m) => setSelectedMedia(m)}
                     onAddToWishlist={(m) => {
                       addItem(m);
@@ -250,6 +253,23 @@ export function SearchPage() {
           <p className="text-lg mb-2">Cherche une œuvre</p>
           <p className="text-sm">Films, séries, livres, jeux, musique</p>
         </div>
+      )}
+
+      {/* Detail Modal */}
+      {detailMedia && (
+        <MediaDetailModal
+          media={detailMedia}
+          onClose={() => setDetailMedia(null)}
+          onAddToJournal={(m) => {
+            setDetailMedia(null);
+            setSelectedMedia(m);
+          }}
+          onAddToWishlist={(m) => {
+            addItem(m);
+            setDetailMedia(null);
+            showToast(`"${m.title}" ajouté à la wishlist`);
+          }}
+        />
       )}
 
       {/* Log Modal */}
