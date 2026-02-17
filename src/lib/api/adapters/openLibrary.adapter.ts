@@ -62,15 +62,26 @@ class OpenLibraryAdapter implements MediaApiAdapter {
   }
 
   async getDetails(key: string): Promise<NormalizedMedia> {
-    // Open Library doesn't have a separate details endpoint, so we search by key
     const workKey = key.replace('/works/', '');
     const response = await axios.get(`${BASE_URL}/works/${workKey}.json`);
 
     const work = response.data;
     const title = work.title || '';
-    const year = work.first_publish_date ? work.first_publish_date.slice(0, 4) : null;
 
-    // Try to get cover
+    // first_publish_date can be "January 1990" or "1990" — extract 4-digit year
+    const yearMatch = String(work.first_publish_date || '').match(/\d{4}/);
+    const year = yearMatch ? yearMatch[0] : null;
+
+    // description can be a TypedText object { type, value } or a plain string
+    const description =
+      typeof work.description === 'string'
+        ? work.description
+        : (work.description?.value as string) || '';
+
+    // subjects as genres (same filter as search)
+    const subjects: string[] = work.subjects || [];
+    const genres = subjects.filter((s) => s.length < 30).slice(0, 5);
+
     let coverUrl = null;
     if (work.covers && work.covers[0]) {
       coverUrl = `${COVERS_URL}/${work.covers[0]}-M.jpg`;
@@ -82,10 +93,10 @@ class OpenLibraryAdapter implements MediaApiAdapter {
       title,
       year,
       posterUrl: coverUrl,
-      genres: [],
+      genres,
       metadata: {
-        description: work.description?.value || work.description || '',
-        subjects: work.subjects?.slice(0, 5) || [],
+        description,
+        subjects: subjects.slice(0, 8),
       },
     };
   }
