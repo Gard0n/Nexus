@@ -171,15 +171,21 @@ export function MediaDetailModal({
               ))}
             </div>
           )}
-          {!loading && (overview || description) && (
+          {!loading && ['movie', 'tv', 'book'].includes(shown.type) && (
             <div className="mt-5">
               <h3 className="text-sm font-semibold text-nexus-text-muted uppercase tracking-wide mb-2 flex items-center gap-2">
                 <BookOpen size={14} />
                 Synopsis
               </h3>
-              <p className="text-sm text-nexus-text leading-relaxed">
-                {overview || description}
-              </p>
+              {(overview || description) ? (
+                <p className="text-sm text-nexus-text leading-relaxed">
+                  {overview || description}
+                </p>
+              ) : (
+                <p className="text-sm text-nexus-text-muted italic">
+                  Pas de description disponible.
+                </p>
+              )}
             </div>
           )}
 
