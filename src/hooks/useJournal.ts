@@ -66,6 +66,15 @@ export function useJournal() {
     return journalService.getAllTags();
   }, []);
 
+  const importEntries = useCallback(
+    (imported: JournalEntry[]) => {
+      const count = journalService.importEntries(imported);
+      loadEntries();
+      return count;
+    },
+    [loadEntries]
+  );
+
   return {
     entries,
     loading,
@@ -75,6 +84,7 @@ export function useJournal() {
     filterByType,
     filterByTag,
     getAllTags,
+    importEntries,
     reload: loadEntries,
   };
 }

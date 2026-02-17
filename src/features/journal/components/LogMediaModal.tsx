@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react';
-import { X, Calendar, Star } from 'lucide-react';
+import { useState, useRef, type FormEvent } from 'react';
+import { X, Calendar, Star, Tag } from 'lucide-react';
 import type { NormalizedMedia } from '@/types/media';
 import { MEDIA_CONFIG } from '@/types/media';
 import { MediaIcon } from '@/components/MediaIcon';
@@ -13,6 +13,7 @@ interface LogMediaModalProps {
     tags: string[];
     isRewatch: boolean;
   };
+  existingTags?: string[];
   onClose: () => void;
   onSubmit: (data: {
     consumedAt: string;
@@ -23,30 +24,49 @@ interface LogMediaModalProps {
   }) => void;
 }
 
-export function LogMediaModal({ media, initialData, onClose, onSubmit }: LogMediaModalProps) {
+export function LogMediaModal({ media, initialData, existingTags = [], onClose, onSubmit }: LogMediaModalProps) {
   const config = MEDIA_CONFIG[media.type];
   const today = new Date().toISOString().split('T')[0];
 
   const [consumedAt, setConsumedAt] = useState(initialData?.consumedAt || today);
   const [rating, setRating] = useState<number | null>(initialData?.rating ?? null);
   const [note, setNote] = useState(initialData?.note || '');
-  const [tagsInput, setTagsInput] = useState(initialData?.tags.join(', ') || '');
+  const [tags, setTags] = useState<string[]>(initialData?.tags || []);
+  const [tagInput, setTagInput] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [isRewatch, setIsRewatch] = useState(initialData?.isRewatch || false);
+  const tagInputRef = useRef<HTMLInputElement>(null);
+
+  const suggestions = existingTags.filter(
+    (t) => t.toLowerCase().includes(tagInput.toLowerCase()) && tagInput.length > 0 && !tags.includes(t)
+  );
+
+  function addTag(tag: string) {
+    const trimmed = tag.trim();
+    if (trimmed && !tags.includes(trimmed)) {
+      setTags([...tags, trimmed]);
+    }
+    setTagInput('');
+    setShowSuggestions(false);
+  }
+
+  function handleTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      addTag(tagInput);
+    } else if (e.key === 'Backspace' && tagInput === '' && tags.length > 0) {
+      setTags(tags.slice(0, -1));
+    }
+  }
+
+  function removeTag(tag: string) {
+    setTags(tags.filter((t) => t !== tag));
+  }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const tags = tagsInput
-      .split(',')
-      .map((t) => t.trim())
-      .filter(Boolean);
-
-    onSubmit({
-      consumedAt,
-      rating,
-      note,
-      tags,
-      isRewatch,
-    });
+    const finalTags = tagInput.trim() ? [...tags, tagInput.trim()] : tags;
+    onSubmit({ consumedAt, rating, note, tags: finalTags, isRewatch });
     onClose();
   }
 
@@ -144,17 +164,56 @@ export function LogMediaModal({ media, initialData, onClose, onSubmit }: LogMedi
           </div>
 
           {/* Tags */}
-          <div>
+          <div className="relative">
             <label className="block text-sm font-medium mb-2">
-              Tags (séparés par des virgules)
+              <Tag size={14} className="inline mr-1" />
+              Tags
             </label>
-            <input
-              type="text"
-              value={tagsInput}
-              onChange={(e) => setTagsInput(e.target.value)}
-              placeholder="ex: coup de cœur, à relire, nostalgie"
-              className="w-full px-4 py-2.5 bg-nexus-bg border border-nexus-border rounded-lg focus:outline-none focus:border-nexus-accent text-nexus-text placeholder:text-nexus-text-muted"
-            />
+            <div
+              className="flex flex-wrap gap-1.5 min-h-[42px] px-3 py-2 bg-nexus-bg border border-nexus-border rounded-lg focus-within:border-nexus-accent cursor-text"
+              onClick={() => tagInputRef.current?.focus()}
+            >
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="flex items-center gap-1 px-2 py-0.5 bg-nexus-surface rounded text-sm text-nexus-text"
+                >
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); removeTag(tag); }}
+                    className="text-nexus-text-muted hover:text-nexus-text"
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
+              ))}
+              <input
+                ref={tagInputRef}
+                type="text"
+                value={tagInput}
+                onChange={(e) => { setTagInput(e.target.value); setShowSuggestions(true); }}
+                onKeyDown={handleTagKeyDown}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                placeholder={tags.length === 0 ? 'coup de cœur, nostalgie...' : ''}
+                className="flex-1 min-w-[120px] bg-transparent outline-none text-sm text-nexus-text placeholder:text-nexus-text-muted"
+              />
+            </div>
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-nexus-surface border border-nexus-border rounded-lg shadow-lg overflow-hidden">
+                {suggestions.slice(0, 6).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onMouseDown={() => addTag(s)}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-nexus-surface-hover transition-colors"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Rewatch */}

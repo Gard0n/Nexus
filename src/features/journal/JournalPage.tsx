@@ -192,6 +192,7 @@ export function JournalPage() {
       {editingEntry && (
         <LogMediaModal
           media={editingEntry.media}
+          existingTags={getAllTags()}
           initialData={{
             consumedAt: editingEntry.consumedAt,
             rating: editingEntry.rating,

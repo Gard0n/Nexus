@@ -85,6 +85,14 @@ export class JournalService {
     const allTags = entries.flatMap((e) => e.tags);
     return Array.from(new Set(allTags)).sort();
   }
+
+  public importEntries(imported: JournalEntry[]): number {
+    const existing = this.getAll();
+    const existingIds = new Set(existing.map((e) => e.id));
+    const newEntries = imported.filter((e) => !existingIds.has(e.id));
+    this.save([...existing, ...newEntries]);
+    return newEntries.length;
+  }
 }
 
 export const journalService = new JournalService();

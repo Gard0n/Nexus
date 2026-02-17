@@ -13,6 +13,7 @@ interface OpenLibraryDoc {
   cover_i?: number;
   publisher?: string[];
   isbn?: string[];
+  subject?: string[];
 }
 
 interface OpenLibraryResponse {
@@ -22,6 +23,9 @@ interface OpenLibraryResponse {
 
 function normalizeResult(doc: OpenLibraryDoc): NormalizedMedia {
   const coverUrl = doc.cover_i ? `${COVERS_URL}/${doc.cover_i}-M.jpg` : null;
+  const genres = (doc.subject || [])
+    .filter((s) => s.length < 30)
+    .slice(0, 5);
 
   return {
     externalId: doc.key,
@@ -29,7 +33,7 @@ function normalizeResult(doc: OpenLibraryDoc): NormalizedMedia {
     title: doc.title,
     year: doc.first_publish_year ? String(doc.first_publish_year) : null,
     posterUrl: coverUrl,
-    genres: [],
+    genres,
     metadata: {
       authors: doc.author_name || [],
       publisher: doc.publisher?.[0] || '',

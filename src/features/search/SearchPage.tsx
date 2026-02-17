@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Search, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { Search, Loader2, SlidersHorizontal } from 'lucide-react';
 import { useSearch } from '@/hooks/useSearch';
 import { useJournal } from '@/hooks/useJournal';
 import { useWishlist } from '@/hooks/useWishlist';
@@ -17,8 +17,15 @@ export function SearchPage() {
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [activeTab, setActiveTab] = useState<MediaType>('movie');
   const [selectedMedia, setSelectedMedia] = useState<NormalizedMedia | null>(null);
-  const { loading, error, results, search } = useSearch();
-  const { addEntry } = useJournal();
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [filterGenre, setFilterGenre] = useState('');
+  const [filterYear, setFilterYear] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const currentPage = useRef<Record<MediaType, number>>({
+    movie: 1, tv: 1, book: 1, game: 1, music: 1,
+  });
+  const { loading, error, results, hasMore, search, loadMore } = useSearch();
+  const { addEntry, getAllTags } = useJournal();
   const { addItem } = useWishlist();
   const { showToast } = useToast();
 
@@ -33,11 +40,42 @@ export function SearchPage() {
   // Trigger search when debounced query changes
   useEffect(() => {
     if (debouncedQuery) {
+      currentPage.current = { movie: 1, tv: 1, book: 1, game: 1, music: 1 };
+      setFilterGenre('');
+      setFilterYear('');
       search(debouncedQuery);
     }
   }, [debouncedQuery, search]);
 
-  const activeResults = results[activeTab] || [];
+  // Reset filters on tab change
+  useEffect(() => {
+    setFilterGenre('');
+    setFilterYear('');
+  }, [activeTab]);
+
+  const handleLoadMore = async () => {
+    const nextPage = currentPage.current[activeTab] + 1;
+    setLoadingMore(true);
+    await loadMore(activeTab, debouncedQuery, nextPage);
+    currentPage.current[activeTab] = nextPage;
+    setLoadingMore(false);
+  };
+
+  const rawResults = results[activeTab] || [];
+
+  const availableGenres = useMemo(() => {
+    const all = rawResults.flatMap((m) => m.genres);
+    return Array.from(new Set(all)).sort();
+  }, [rawResults]);
+
+  const activeResults = useMemo(() => {
+    return rawResults.filter((m) => {
+      if (filterGenre && !m.genres.includes(filterGenre)) return false;
+      if (filterYear && m.year !== filterYear) return false;
+      return true;
+    });
+  }, [rawResults, filterGenre, filterYear]);
+
   const totalCount = MEDIA_TYPES.reduce((sum, type) => sum + (results[type]?.length || 0), 0);
 
   return (
@@ -110,23 +148,94 @@ export function SearchPage() {
             })}
           </div>
 
+          {/* Advanced filters */}
+          {!loading && rawResults.length > 0 && (
+            <div className="mb-4">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border transition-colors ${
+                  showFilters || filterGenre || filterYear
+                    ? 'border-nexus-accent text-nexus-accent'
+                    : 'border-nexus-border text-nexus-text-muted hover:border-nexus-accent hover:text-nexus-accent'
+                }`}
+              >
+                <SlidersHorizontal size={14} />
+                Filtrer
+                {(filterGenre || filterYear) && (
+                  <span className="bg-nexus-accent text-white text-xs px-1.5 py-0.5 rounded-full">
+                    {[filterGenre, filterYear].filter(Boolean).length}
+                  </span>
+                )}
+              </button>
+              {showFilters && (
+                <div className="mt-3 flex flex-wrap gap-3">
+                  {availableGenres.length > 0 && (
+                    <select
+                      value={filterGenre}
+                      onChange={(e) => setFilterGenre(e.target.value)}
+                      className="px-3 py-1.5 bg-nexus-bg border border-nexus-border rounded-lg text-sm text-nexus-text focus:outline-none focus:border-nexus-accent"
+                    >
+                      <option value="">Tous les genres</option>
+                      {availableGenres.map((g) => (
+                        <option key={g} value={g}>{g}</option>
+                      ))}
+                    </select>
+                  )}
+                  <input
+                    type="number"
+                    value={filterYear}
+                    onChange={(e) => setFilterYear(e.target.value)}
+                    placeholder="Année"
+                    min="1900"
+                    max={new Date().getFullYear()}
+                    className="w-24 px-3 py-1.5 bg-nexus-bg border border-nexus-border rounded-lg text-sm text-nexus-text focus:outline-none focus:border-nexus-accent placeholder:text-nexus-text-muted"
+                  />
+                  {(filterGenre || filterYear) && (
+                    <button
+                      onClick={() => { setFilterGenre(''); setFilterYear(''); }}
+                      className="text-sm text-nexus-text-muted hover:text-nexus-accent transition-colors"
+                    >
+                      Réinitialiser
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Results grid */}
           {loading ? (
             <SearchSkeleton />
           ) : activeResults.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {activeResults.map((media) => (
-                <MediaCard
-                  key={`${media.type}-${media.externalId}`}
-                  media={media}
-                  onAddToJournal={(m) => setSelectedMedia(m)}
-                  onAddToWishlist={(m) => {
-                    addItem(m);
-                    showToast(`"${m.title}" ajouté à la wishlist`);
-                  }}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {activeResults.map((media) => (
+                  <MediaCard
+                    key={`${media.type}-${media.externalId}`}
+                    media={media}
+                    onAddToJournal={(m) => setSelectedMedia(m)}
+                    onAddToWishlist={(m) => {
+                      addItem(m);
+                      showToast(`"${m.title}" ajouté à la wishlist`);
+                    }}
+                  />
+                ))}
+              </div>
+              {hasMore[activeTab] && (
+                <div className="flex justify-center mt-6">
+                  <button
+                    onClick={handleLoadMore}
+                    disabled={loadingMore}
+                    className="flex items-center gap-2 px-6 py-2 bg-nexus-surface border border-nexus-border rounded-lg text-sm font-medium hover:border-nexus-accent transition-colors disabled:opacity-50"
+                  >
+                    {loadingMore ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : null}
+                    {loadingMore ? 'Chargement...' : 'Voir plus'}
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-nexus-text-muted">
               <p className="text-sm">Aucun résultat pour {MEDIA_CONFIG[activeTab].label.toLowerCase()}</p>
@@ -147,6 +256,7 @@ export function SearchPage() {
       {selectedMedia && (
         <LogMediaModal
           media={selectedMedia}
+          existingTags={getAllTags()}
           onClose={() => setSelectedMedia(null)}
           onSubmit={(data) => {
             addEntry(selectedMedia, data);

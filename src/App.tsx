@@ -9,6 +9,7 @@ import { JournalPage } from '@/features/journal/JournalPage';
 import { SearchPage } from '@/features/search/SearchPage';
 import { WishlistPage } from '@/features/wishlist/WishlistPage';
 import { ProfilePage } from '@/features/profile/ProfilePage';
+import { NotFoundPage } from '@/components/NotFoundPage';
 
 function App() {
   const { user, loading } = useAuth();
@@ -41,6 +42,7 @@ function App() {
             <Route path="/wishlist" element={<WishlistPage />} />
             <Route path="/profile" element={<ProfilePage />} />
           </Route>
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </HashRouter>
     </ToastProvider>

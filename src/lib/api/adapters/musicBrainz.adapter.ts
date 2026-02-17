@@ -11,6 +11,8 @@ interface MusicBrainzRelease {
   date?: string;
   'artist-credit'?: Array<{ name: string }>;
   'label-info'?: Array<{ label?: { name: string } }>;
+  genres?: Array<{ name: string; count: number }>;
+  tags?: Array<{ name: string; count: number }>;
 }
 
 interface MusicBrainzSearchResponse {
@@ -23,6 +25,10 @@ function normalizeResult(release: MusicBrainzRelease): NormalizedMedia {
   const year = release.date ? release.date.slice(0, 4) : null;
   const artists = (release['artist-credit'] || []).map((a) => a.name);
   const label = release['label-info']?.[0]?.label?.name || '';
+  const genres = (release.genres || release.tags || [])
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5)
+    .map((g) => g.name);
 
   // Try to get cover art
   const coverUrl = `${COVER_ART_URL}/release/${release.id}/front-250`;
@@ -33,7 +39,7 @@ function normalizeResult(release: MusicBrainzRelease): NormalizedMedia {
     title: release.title,
     year,
     posterUrl: coverUrl,
-    genres: [],
+    genres,
     metadata: {
       artists,
       label,
@@ -85,7 +91,7 @@ class MusicBrainzAdapter implements MediaApiAdapter {
     const response = await axios.get<MusicBrainzRelease>(`${BASE_URL}/release/${id}`, {
       params: {
         fmt: 'json',
-        inc: 'artists+labels+recordings',
+        inc: 'artists+labels+recordings+genres+tags',
       },
       headers: {
         'User-Agent': 'Nexus/1.0.0 (https://nexus.app)',
@@ -97,6 +103,10 @@ class MusicBrainzAdapter implements MediaApiAdapter {
     const artists = (release['artist-credit'] || []).map((a) => a.name);
     const label = release['label-info']?.[0]?.label?.name || '';
     const coverUrl = `${COVER_ART_URL}/release/${id}/front-500`;
+    const genres = (release.genres || release.tags || [])
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5)
+      .map((g) => g.name);
 
     return {
       externalId: id,
@@ -104,7 +114,7 @@ class MusicBrainzAdapter implements MediaApiAdapter {
       title: release.title,
       year,
       posterUrl: coverUrl,
-      genres: [],
+      genres,
       metadata: {
         artists,
         label,
