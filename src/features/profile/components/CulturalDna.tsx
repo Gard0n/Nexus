@@ -170,6 +170,30 @@ export function CulturalDna({ stats }: CulturalDnaProps) {
         </div>
       </div>
 
+      {/* Average rating by type */}
+      {Object.values(stats.averageRatingByType).some((v) => v > 0) && (
+        <div className="bg-nexus-surface border border-nexus-border rounded-lg p-4">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Star size={20} className="text-nexus-accent" />
+            Note moyenne par type
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {Object.entries(stats.averageRatingByType).map(([type, avg]) => {
+              if (avg === 0) return null;
+              const config = MEDIA_CONFIG[type as keyof typeof MEDIA_CONFIG];
+              return (
+                <div key={type} className="bg-nexus-bg rounded-lg p-3 text-center">
+                  <div className="text-xl font-bold" style={{ color: config.color }}>
+                    {avg}/10
+                  </div>
+                  <div className="text-xs text-nexus-text-muted mt-1">{config.label}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Top 10 Favorite Works */}
       {stats.topEntries.length > 0 && (
         <div className="bg-nexus-surface border border-nexus-border rounded-lg p-4">

@@ -14,6 +14,7 @@ interface RAWGGame {
   platforms?: Array<{ platform: { name: string } }>;
   rating?: number;
   metacritic?: number;
+  description_raw?: string;
 }
 
 interface RAWGSearchResponse {
@@ -89,6 +90,7 @@ class RAWGAdapter implements MediaApiAdapter {
         platforms,
         rating: game.rating || null,
         metacritic: game.metacritic || null,
+        description: game.description_raw || '',
       },
     };
   }

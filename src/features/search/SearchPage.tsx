@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { useSearch } from '@/hooks/useSearch';
 import { useJournal } from '@/hooks/useJournal';
 import { useWishlist } from '@/hooks/useWishlist';
@@ -16,8 +17,9 @@ import { MediaDetailModal } from '@/components/MediaDetailModal';
 const MEDIA_TYPES: MediaType[] = ['movie', 'tv', 'book', 'game', 'music'];
 
 export function SearchPage() {
-  const [query, setQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [searchParams] = useSearchParams();
+  const [query, setQuery] = useState(() => searchParams.get('q') ?? '');
+  const [debouncedQuery, setDebouncedQuery] = useState(() => searchParams.get('q') ?? '');
   const [activeTab, setActiveTab] = useState<MediaType>('movie');
   const [selectedMedia, setSelectedMedia] = useState<NormalizedMedia | null>(null);
   const [detailMedia, setDetailMedia] = useState<NormalizedMedia | null>(null);

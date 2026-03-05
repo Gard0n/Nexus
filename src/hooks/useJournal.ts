@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { JournalEntry, NormalizedMedia } from '@/types/media';
+import type { JournalEntry, NormalizedMedia, ConsumptionStatus } from '@/types/media';
 import { journalService } from '@/lib/localStorage/journal.service';
 
 export function useJournal() {
@@ -26,6 +26,7 @@ export function useJournal() {
         note: string;
         tags: string[];
         isRewatch: boolean;
+        status: ConsumptionStatus;
       }
     ) => {
       const newEntry = journalService.add(media, data);

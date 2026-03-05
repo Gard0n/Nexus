@@ -31,7 +31,12 @@ export function MediaDetailModal({
 }: MediaDetailModalProps) {
   const [details, setDetails] = useState<NormalizedMedia | null>(null);
   const [loading, setLoading] = useState(true);
+  const [imgError, setImgError] = useState(false);
   const config = MEDIA_CONFIG[media.type];
+
+  useEffect(() => {
+    setImgError(false);
+  }, [media.externalId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -85,12 +90,12 @@ export function MediaDetailModal({
           <div className="flex gap-5">
             {/* Poster */}
             <div className="flex-shrink-0 w-32 md:w-44">
-              {shown.posterUrl ? (
+              {shown.posterUrl && !imgError ? (
                 <img
                   src={shown.posterUrl}
                   alt={shown.title}
                   className="w-full rounded-lg object-cover shadow-lg"
-                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  onError={() => setImgError(true)}
                 />
               ) : (
                 <div className="w-full aspect-[2/3] bg-nexus-bg rounded-lg flex items-center justify-center">
@@ -171,7 +176,7 @@ export function MediaDetailModal({
               ))}
             </div>
           )}
-          {!loading && ['movie', 'tv', 'book'].includes(shown.type) && (
+          {!loading && ['movie', 'tv', 'book', 'game'].includes(shown.type) && (
             <div className="mt-5">
               <h3 className="text-sm font-semibold text-nexus-text-muted uppercase tracking-wide mb-2 flex items-center gap-2">
                 <BookOpen size={14} />

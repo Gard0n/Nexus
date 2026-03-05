@@ -14,6 +14,7 @@ export class WishlistService {
 
   public list(): WishlistItem[] {
     return this.getAll().sort((a, b) => {
+      if (b.priority !== a.priority) return b.priority - a.priority;
       return new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime();
     });
   }
@@ -21,13 +22,10 @@ export class WishlistService {
   public add(media: NormalizedMedia, priority = 0): WishlistItem {
     const items = this.getAll();
 
-    // Check if already exists
     const exists = items.find(
       (item) => item.media.externalId === media.externalId && item.media.type === media.type
     );
-    if (exists) {
-      return exists;
-    }
+    if (exists) return exists;
 
     const newItem: WishlistItem = {
       id: crypto.randomUUID(),
@@ -39,6 +37,15 @@ export class WishlistService {
     items.push(newItem);
     this.save(items);
     return newItem;
+  }
+
+  public updatePriority(id: string, priority: number): WishlistItem | null {
+    const items = this.getAll();
+    const index = items.findIndex((item) => item.id === id);
+    if (index === -1) return null;
+    items[index] = { ...items[index], priority };
+    this.save(items);
+    return items[index];
   }
 
   public remove(id: string): boolean {

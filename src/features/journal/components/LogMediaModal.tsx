@@ -1,8 +1,14 @@
 import { useState, useRef, type FormEvent } from 'react';
 import { X, Calendar, Star, Tag } from 'lucide-react';
-import type { NormalizedMedia } from '@/types/media';
+import type { NormalizedMedia, ConsumptionStatus } from '@/types/media';
 import { MEDIA_CONFIG } from '@/types/media';
 import { MediaIcon } from '@/components/MediaIcon';
+
+const STATUS_OPTIONS: { value: ConsumptionStatus; label: string }[] = [
+  { value: 'completed', label: 'Terminé' },
+  { value: 'in_progress', label: 'En cours' },
+  { value: 'abandoned', label: 'Abandonné' },
+];
 
 interface LogMediaModalProps {
   media: NormalizedMedia;
@@ -12,6 +18,7 @@ interface LogMediaModalProps {
     note: string;
     tags: string[];
     isRewatch: boolean;
+    status: ConsumptionStatus;
   };
   existingTags?: string[];
   onClose: () => void;
@@ -21,6 +28,7 @@ interface LogMediaModalProps {
     note: string;
     tags: string[];
     isRewatch: boolean;
+    status: ConsumptionStatus;
   }) => void;
 }
 
@@ -35,6 +43,7 @@ export function LogMediaModal({ media, initialData, existingTags = [], onClose, 
   const [tagInput, setTagInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isRewatch, setIsRewatch] = useState(initialData?.isRewatch || false);
+  const [status, setStatus] = useState<ConsumptionStatus>(initialData?.status || 'completed');
   const tagInputRef = useRef<HTMLInputElement>(null);
 
   const suggestions = existingTags.filter(
@@ -43,9 +52,7 @@ export function LogMediaModal({ media, initialData, existingTags = [], onClose, 
 
   function addTag(tag: string) {
     const trimmed = tag.trim();
-    if (trimmed && !tags.includes(trimmed)) {
-      setTags([...tags, trimmed]);
-    }
+    if (trimmed && !tags.includes(trimmed)) setTags([...tags, trimmed]);
     setTagInput('');
     setShowSuggestions(false);
   }
@@ -59,14 +66,10 @@ export function LogMediaModal({ media, initialData, existingTags = [], onClose, 
     }
   }
 
-  function removeTag(tag: string) {
-    setTags(tags.filter((t) => t !== tag));
-  }
-
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const finalTags = tagInput.trim() ? [...tags, tagInput.trim()] : tags;
-    onSubmit({ consumedAt, rating, note, tags: finalTags, isRewatch });
+    onSubmit({ consumedAt, rating, note, tags: finalTags, isRewatch, status });
     onClose();
   }
 
@@ -77,11 +80,7 @@ export function LogMediaModal({ media, initialData, existingTags = [], onClose, 
         <div className="flex items-start justify-between p-4 border-b border-nexus-border sticky top-0 bg-nexus-surface">
           <div className="flex items-start gap-3 flex-1">
             {media.posterUrl ? (
-              <img
-                src={media.posterUrl}
-                alt={media.title}
-                className="w-12 h-16 object-cover rounded"
-              />
+              <img src={media.posterUrl} alt={media.title} className="w-12 h-16 object-cover rounded" />
             ) : (
               <div className="w-12 h-16 bg-nexus-bg rounded flex items-center justify-center">
                 <MediaIcon type={media.type} size={20} />
@@ -89,21 +88,36 @@ export function LogMediaModal({ media, initialData, existingTags = [], onClose, 
             )}
             <div>
               <h3 className="font-semibold text-lg line-clamp-2">{media.title}</h3>
-              <p className="text-sm text-nexus-text-muted">
-                {media.year} • {config.label}
-              </p>
+              <p className="text-sm text-nexus-text-muted">{media.year} • {config.label}</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="text-nexus-text-muted hover:text-nexus-text transition-colors"
-          >
+          <button onClick={onClose} className="text-nexus-text-muted hover:text-nexus-text transition-colors">
             <X size={20} />
           </button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
+          {/* Status */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Statut</label>
+            <div className="flex gap-2">
+              {STATUS_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setStatus(opt.value)}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                    status === opt.value
+                      ? 'border-nexus-accent text-nexus-accent bg-nexus-accent/10'
+                      : 'border-nexus-border text-nexus-text-muted hover:border-nexus-accent/50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Date */}
           <div>
             <label className="block text-sm font-medium mb-2">
@@ -137,11 +151,7 @@ export function LogMediaModal({ media, initialData, existingTags = [], onClose, 
                       ? 'bg-nexus-accent text-white'
                       : 'bg-nexus-bg text-nexus-text-muted hover:bg-nexus-surface-hover'
                   }`}
-                  style={
-                    rating && value <= rating
-                      ? { backgroundColor: config.color }
-                      : undefined
-                  }
+                  style={rating && value <= rating ? { backgroundColor: config.color } : undefined}
                 >
                   {value}
                 </button>
@@ -151,9 +161,7 @@ export function LogMediaModal({ media, initialData, existingTags = [], onClose, 
 
           {/* Note */}
           <div>
-            <label className="block text-sm font-medium mb-2">
-              Note personnelle (optionnel)
-            </label>
+            <label className="block text-sm font-medium mb-2">Note personnelle (optionnel)</label>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
@@ -174,14 +182,11 @@ export function LogMediaModal({ media, initialData, existingTags = [], onClose, 
               onClick={() => tagInputRef.current?.focus()}
             >
               {tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="flex items-center gap-1 px-2 py-0.5 bg-nexus-surface rounded text-sm text-nexus-text"
-                >
+                <span key={tag} className="flex items-center gap-1 px-2 py-0.5 bg-nexus-surface rounded text-sm text-nexus-text">
                   {tag}
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); removeTag(tag); }}
+                    onClick={(e) => { e.stopPropagation(); setTags(tags.filter((t) => t !== tag)); }}
                     className="text-nexus-text-muted hover:text-nexus-text"
                   >
                     <X size={12} />
@@ -203,12 +208,8 @@ export function LogMediaModal({ media, initialData, existingTags = [], onClose, 
             {showSuggestions && suggestions.length > 0 && (
               <div className="absolute z-10 w-full mt-1 bg-nexus-surface border border-nexus-border rounded-lg shadow-lg overflow-hidden">
                 {suggestions.slice(0, 6).map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onMouseDown={() => addTag(s)}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-nexus-surface-hover transition-colors"
-                  >
+                  <button key={s} type="button" onMouseDown={() => addTag(s)}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-nexus-surface-hover transition-colors">
                     {s}
                   </button>
                 ))}
@@ -229,18 +230,13 @@ export function LogMediaModal({ media, initialData, existingTags = [], onClose, 
 
           {/* Actions */}
           <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 py-2.5 border border-nexus-border hover:bg-nexus-surface-hover rounded-lg text-sm font-medium transition-colors"
-            >
+            <button type="button" onClick={onClose}
+              className="flex-1 py-2.5 border border-nexus-border hover:bg-nexus-surface-hover rounded-lg text-sm font-medium transition-colors">
               Annuler
             </button>
-            <button
-              type="submit"
-              className="flex-1 py-2.5 bg-nexus-accent hover:bg-nexus-accent-hover text-white rounded-lg text-sm font-medium transition-colors"
-              style={{ backgroundColor: config.color }}
-            >
+            <button type="submit"
+              className="flex-1 py-2.5 text-white rounded-lg text-sm font-medium transition-colors"
+              style={{ backgroundColor: config.color }}>
               {initialData ? 'Modifier' : 'Ajouter au journal'}
             </button>
           </div>

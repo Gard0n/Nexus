@@ -10,6 +10,8 @@ export interface NormalizedMedia {
   metadata: Record<string, unknown>;
 }
 
+export type ConsumptionStatus = 'completed' | 'in_progress' | 'abandoned';
+
 export interface JournalEntry {
   id: string;
   userId: string;
@@ -19,6 +21,7 @@ export interface JournalEntry {
   note: string;
   tags: string[];
   isRewatch: boolean;
+  status: ConsumptionStatus;
   createdAt: string;
   updatedAt: string;
 }

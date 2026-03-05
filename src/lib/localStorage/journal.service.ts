@@ -1,11 +1,16 @@
-import type { JournalEntry, NormalizedMedia } from '@/types/media';
+import type { JournalEntry, NormalizedMedia, ConsumptionStatus } from '@/types/media';
 
 const JOURNAL_KEY = 'nexus_journal';
 
 export class JournalService {
   private getAll(): JournalEntry[] {
     const data = localStorage.getItem(JOURNAL_KEY);
-    return data ? JSON.parse(data) : [];
+    const entries = data ? JSON.parse(data) : [];
+    // Migrate old entries without status
+    return entries.map((e: JournalEntry) => ({
+      ...e,
+      status: e.status ?? 'completed',
+    }));
   }
 
   private save(entries: JournalEntry[]): void {
@@ -26,6 +31,7 @@ export class JournalService {
       note: string;
       tags: string[];
       isRewatch: boolean;
+      status: ConsumptionStatus;
     }
   ): JournalEntry {
     const entries = this.getAll();
@@ -38,6 +44,7 @@ export class JournalService {
       note: data.note,
       tags: data.tags,
       isRewatch: data.isRewatch,
+      status: data.status,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };

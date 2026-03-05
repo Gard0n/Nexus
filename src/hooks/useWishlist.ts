@@ -47,6 +47,19 @@ export function useWishlist() {
     return wishlistService.isInWishlist(externalId, type);
   }, []);
 
+  const updatePriority = useCallback((id: string, priority: number) => {
+    const updated = wishlistService.updatePriority(id, priority);
+    if (updated) {
+      setItems((prev) =>
+        [...prev.map((item) => (item.id === id ? updated : item))].sort((a, b) => {
+          if (b.priority !== a.priority) return b.priority - a.priority;
+          return new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime();
+        })
+      );
+    }
+    return updated;
+  }, []);
+
   const filterByType = useCallback((type: string) => {
     return wishlistService.filterByType(type);
   }, []);
@@ -57,6 +70,7 @@ export function useWishlist() {
     addItem,
     removeItem,
     removeByMedia,
+    updatePriority,
     isInWishlist,
     filterByType,
     reload: loadItems,

@@ -1,4 +1,5 @@
-import { Plus } from 'lucide-react';
+import { useState } from 'react';
+import { Plus, Check, Bookmark } from 'lucide-react';
 import type { NormalizedMedia } from '@/types/media';
 import { MEDIA_CONFIG } from '@/types/media';
 import { MediaIcon } from '@/components/MediaIcon';
@@ -8,10 +9,14 @@ interface MediaCardProps {
   onAddToJournal?: (media: NormalizedMedia) => void;
   onAddToWishlist?: (media: NormalizedMedia) => void;
   onViewDetails?: (media: NormalizedMedia) => void;
+  isInJournal?: boolean;
+  isInWishlist?: boolean;
 }
 
-export function MediaCard({ media, onAddToJournal, onAddToWishlist, onViewDetails }: MediaCardProps) {
+export function MediaCard({ media, onAddToJournal, onAddToWishlist, onViewDetails, isInJournal, isInWishlist }: MediaCardProps) {
   const config = MEDIA_CONFIG[media.type];
+  const [imgError, setImgError] = useState(false);
+  const showImage = media.posterUrl && !imgError;
 
   return (
     <div className="bg-nexus-surface border border-nexus-border rounded-lg overflow-hidden hover:border-nexus-accent/50 transition-colors group">
@@ -19,14 +24,12 @@ export function MediaCard({ media, onAddToJournal, onAddToWishlist, onViewDetail
         className="relative aspect-[2/3] bg-nexus-bg overflow-hidden cursor-pointer"
         onClick={() => onViewDetails?.(media)}
       >
-        {media.posterUrl ? (
+        {showImage ? (
           <img
-            src={media.posterUrl}
+            src={media.posterUrl!}
             alt={media.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
+            onError={() => setImgError(true)}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
@@ -49,6 +52,21 @@ export function MediaCard({ media, onAddToJournal, onAddToWishlist, onViewDetail
             {config.label}
           </div>
         </div>
+        {/* Journal / Wishlist indicators */}
+        {(isInJournal || isInWishlist) && (
+          <div className="absolute top-2 right-2 flex flex-col gap-1">
+            {isInJournal && (
+              <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center shadow-md" title="Déjà dans le journal">
+                <Check size={13} className="text-white" strokeWidth={3} />
+              </div>
+            )}
+            {isInWishlist && !isInJournal && (
+              <div className="w-6 h-6 rounded-full bg-nexus-accent flex items-center justify-center shadow-md" title="Dans la wishlist">
+                <Bookmark size={12} className="text-white" fill="currentColor" />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="p-3">

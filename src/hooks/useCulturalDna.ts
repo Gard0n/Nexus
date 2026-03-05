@@ -4,6 +4,7 @@ import type { JournalEntry, MediaType } from '@/types/media';
 export interface CulturalDnaStats {
   totalEntries: number;
   averageRating: number;
+  averageRatingByType: Record<MediaType, number>;
   mediaBreakdown: Record<MediaType, number>;
   topGenres: Array<{ genre: string; count: number }>;
   entriesByMonth: Array<{ month: string; count: number }>;
@@ -19,6 +20,7 @@ export function useCulturalDna(entries: JournalEntry[]): CulturalDnaStats {
       return {
         totalEntries: 0,
         averageRating: 0,
+        averageRatingByType: { movie: 0, tv: 0, book: 0, game: 0, music: 0 },
         mediaBreakdown: { movie: 0, tv: 0, book: 0, game: 0, music: 0 },
         topGenres: [],
         entriesByMonth: [],
@@ -84,6 +86,15 @@ export function useCulturalDna(entries: JournalEntry[]): CulturalDnaStats {
       ([, a], [, b]) => b - a
     )[0]?.[0] || '';
 
+    // Average rating by type
+    const TYPES: MediaType[] = ['movie', 'tv', 'book', 'game', 'music'];
+    const averageRatingByType = TYPES.reduce((acc, type) => {
+      const typeEntries = entries.filter((e) => e.media.type === type && e.rating !== null);
+      const sum = typeEntries.reduce((s, e) => s + (e.rating || 0), 0);
+      acc[type] = typeEntries.length > 0 ? Math.round((sum / typeEntries.length) * 10) / 10 : 0;
+      return acc;
+    }, {} as Record<MediaType, number>);
+
     // Top entries (by rating)
     const topEntries = entries
       .filter((e) => e.rating !== null)
@@ -93,6 +104,7 @@ export function useCulturalDna(entries: JournalEntry[]): CulturalDnaStats {
     return {
       totalEntries: entries.length,
       averageRating: Math.round(averageRating * 10) / 10,
+      averageRatingByType,
       mediaBreakdown: {
         movie: mediaBreakdown.movie || 0,
         tv: mediaBreakdown.tv || 0,

@@ -11,7 +11,7 @@ import { LogMediaModal } from '@/features/journal/components/LogMediaModal';
 const MEDIA_TYPES: MediaType[] = ['movie', 'tv', 'book', 'game', 'music'];
 
 export function WishlistPage() {
-  const { items, loading, removeItem, removeByMedia } = useWishlist();
+  const { items, loading, removeItem, removeByMedia, updatePriority } = useWishlist();
   const { addEntry } = useJournal();
   const { showToast } = useToast();
   const [selectedItem, setSelectedItem] = useState<WishlistItem | null>(null);
@@ -20,6 +20,37 @@ export function WishlistPage() {
   const filteredItems = filterType === 'all'
     ? items
     : items.filter((item) => item.media.type === filterType);
+
+  function handleMoveUp(index: number) {
+    if (index === 0) return;
+    const above = filteredItems[index - 1];
+    const current = filteredItems[index];
+    // Swap priorities
+    const abovePriority = above.priority;
+    const currentPriority = current.priority;
+    if (abovePriority === currentPriority) {
+      updatePriority(above.id, currentPriority - 1);
+      updatePriority(current.id, currentPriority);
+    } else {
+      updatePriority(current.id, abovePriority);
+      updatePriority(above.id, currentPriority);
+    }
+  }
+
+  function handleMoveDown(index: number) {
+    if (index === filteredItems.length - 1) return;
+    const below = filteredItems[index + 1];
+    const current = filteredItems[index];
+    const belowPriority = below.priority;
+    const currentPriority = current.priority;
+    if (belowPriority === currentPriority) {
+      updatePriority(below.id, currentPriority + 1);
+      updatePriority(current.id, currentPriority);
+    } else {
+      updatePriority(current.id, belowPriority);
+      updatePriority(below.id, currentPriority);
+    }
+  }
 
   if (loading) {
     return (
@@ -56,9 +87,7 @@ export function WishlistPage() {
         <button
           onClick={() => setFilterType('all')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-            filterType === 'all'
-              ? 'bg-nexus-accent text-white'
-              : 'bg-nexus-surface text-nexus-text-muted hover:text-nexus-text'
+            filterType === 'all' ? 'bg-nexus-accent text-white' : 'bg-nexus-surface text-nexus-text-muted hover:text-nexus-text'
           }`}
         >
           Tout ({items.length})
@@ -68,37 +97,28 @@ export function WishlistPage() {
           const count = items.filter((item) => item.media.type === type).length;
           if (count === 0) return null;
           return (
-            <button
-              key={type}
-              onClick={() => setFilterType(type)}
+            <button key={type} onClick={() => setFilterType(type)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-                filterType === type
-                  ? 'text-white'
-                  : 'bg-nexus-surface text-nexus-text-muted hover:text-nexus-text'
+                filterType === type ? 'text-white' : 'bg-nexus-surface text-nexus-text-muted hover:text-nexus-text'
               }`}
-              style={
-                filterType === type
-                  ? { backgroundColor: config.color }
-                  : undefined
-              }
-            >
+              style={filterType === type ? { backgroundColor: config.color } : undefined}>
               {config.label} ({count})
             </button>
           );
         })}
       </div>
 
-      {/* Items list */}
       {filteredItems.length > 0 ? (
         <div className="space-y-4">
-          {filteredItems.map((item) => (
+          {filteredItems.map((item, index) => (
             <WishlistItemCard
               key={item.id}
               item={item}
-              onRemove={(id) => {
-                removeItem(id);
-                showToast('Retiré de la wishlist');
-              }}
+              isFirst={index === 0}
+              isLast={index === filteredItems.length - 1}
+              onMoveUp={() => handleMoveUp(index)}
+              onMoveDown={() => handleMoveDown(index)}
+              onRemove={(id) => { removeItem(id); showToast('Retiré de la wishlist'); }}
               onMarkAsConsumed={(item) => setSelectedItem(item)}
             />
           ))}
@@ -109,7 +129,6 @@ export function WishlistPage() {
         </div>
       )}
 
-      {/* Log Modal */}
       {selectedItem && (
         <LogMediaModal
           media={selectedItem.media}
