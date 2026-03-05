@@ -13,6 +13,23 @@ const adapters: Record<MediaType, MediaApiAdapter> = {
   music: musicBrainzAdapter,
 };
 
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const cache = new Map<string, { data: unknown; timestamp: number }>();
+
+function getCache<T>(key: string): T | null {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > CACHE_TTL) {
+    cache.delete(key);
+    return null;
+  }
+  return entry.data as T;
+}
+
+function setCache(key: string, data: unknown): void {
+  cache.set(key, { data, timestamp: Date.now() });
+}
+
 export async function searchByType(
   type: MediaType,
   query: string,
@@ -22,7 +39,12 @@ export async function searchByType(
   if (!adapter) {
     throw new Error(`No adapter found for type: ${type}`);
   }
-  return adapter.search(query, page);
+  const key = `search:${type}:${query}:${page}`;
+  const cached = getCache<PaginatedResult>(key);
+  if (cached) return cached;
+  const result = await adapter.search(query, page);
+  setCache(key, result);
+  return result;
 }
 
 export async function searchAll(
@@ -30,7 +52,11 @@ export async function searchAll(
 ): Promise<Record<MediaType, PaginatedResult>> {
   const results = await Promise.allSettled(
     Object.entries(adapters).map(async ([type, adapter]) => {
+      const key = `search:${type}:${query}:1`;
+      const cached = getCache<PaginatedResult>(key);
+      if (cached) return [type, cached] as [MediaType, PaginatedResult];
       const result = await adapter.search(query, 1);
+      setCache(key, result);
       return [type, result] as [MediaType, PaginatedResult];
     })
   );
@@ -57,5 +83,10 @@ export async function getMediaDetails(
   if (!adapter) {
     throw new Error(`No adapter found for type: ${type}`);
   }
-  return adapter.getDetails(id);
+  const key = `details:${type}:${id}`;
+  const cached = getCache<NormalizedMedia>(key);
+  if (cached) return cached;
+  const result = await adapter.getDetails(id);
+  setCache(key, result);
+  return result;
 }
